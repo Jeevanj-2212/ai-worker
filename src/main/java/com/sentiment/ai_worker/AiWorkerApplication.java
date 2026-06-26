@@ -1,4 +1,4 @@
-package com.tavant.sentiment.ai_worker;
+package com.sentiment.ai_worker;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
