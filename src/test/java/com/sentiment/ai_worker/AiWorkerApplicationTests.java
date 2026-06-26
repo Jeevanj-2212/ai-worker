@@ -1,4 +1,4 @@
-package com.tavant.sentiment.ai_worker;
+package com.sentiment.ai_worker;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
