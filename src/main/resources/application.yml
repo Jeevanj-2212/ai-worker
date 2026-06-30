@@ -1,3 +1,5 @@
+server:
+  port: 8082
 spring:
   kafka:
     bootstrap-servers: localhost:9092
@@ -6,6 +8,11 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  ai:
+    google:
+      genai:
+        api-key: AQ.Ab8RN6J4Uw8VhbkEMrAmBTK5y18BU728IWcagoQ8itZEybGYBg
+        project-id: sentiment-worker-project
 
   datasource:
     url: jdbc:postgresql://localhost:5432/sentiment_db
@@ -25,3 +32,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+
+app:
+  finnhub:
+    base-url: https://finnhub.io/api/v1
+    api-key: d91vip1r01qqnh2j6c30d91vip1r01qqnh2j6c3g
