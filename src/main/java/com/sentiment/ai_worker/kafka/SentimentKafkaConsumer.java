@@ -29,8 +29,9 @@ public class SentimentKafkaConsumer {
 
     private final FinnhubClient finhubClient;
     private final NewsArticleRepository newsArticleRepository;
-    @KafkaListener(topics = "sentiment-requests", groupId = "ai-worker-group")
+    @KafkaListener(topics = "sentiment-tasks-v1", groupId = "super-flush-group-1")
     public void consume(String message) {
+        System.out.println("🔥 CONSUMER CALLED WITH: " + message);
         log.info("Received Kafka message: {}", message);
         try {
             // 1. Parse the JSON string
