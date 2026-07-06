@@ -7,6 +7,7 @@ import com.sentiment.ai_worker.Repository.NewsArticleRepository;
 import com.sentiment.ai_worker.Repository.SentimentJobRepository;
 import com.sentiment.ai_worker.client.FinnhubClient;
 import com.sentiment.ai_worker.dto.FinnhubNewsDto;
+import com.sentiment.ai_worker.service.AiSentimentAnalyzerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,10 +30,13 @@ public class SentimentKafkaConsumer {
 
     private final FinnhubClient finhubClient;
     private final NewsArticleRepository newsArticleRepository;
+    private final AiSentimentAnalyzerService aiSentimentAnalyzerService;
+
     @KafkaListener(topics = "sentiment-tasks-v1", groupId = "super-flush-group-1")
     public void consume(String message) {
         System.out.println(" CONSUMER CALLED WITH: " + message);
         log.info("Received Kafka message: {}", message);
+        SentimentJob job = null;
         try {
             // 1. Parse the JSON string
             JsonNode jsonNode = objectMapper.readTree(message);
@@ -40,7 +44,7 @@ public class SentimentKafkaConsumer {
             String ticker = jsonNode.get("ticker").asText();
 
             // 2. Fetch the job from the database
-            SentimentJob job = jobRepository.findById(jobId)
+            job = jobRepository.findById(jobId)
                     .orElseThrow(() -> new IllegalArgumentException("Job not found in DB: " + jobId));
 
             // 3. Update the state to PROCESSING
@@ -57,10 +61,11 @@ public class SentimentKafkaConsumer {
 
             List<FinnhubNewsDto> newsDtos = finhubClient.fetchLatestNews(ticker);
 
+            SentimentJob finalJob = job;
             List<NewsArticle> articlesToSave = newsDtos.stream()
                     .limit(5)
                     .map(dto -> NewsArticle.builder()
-                            .job(job) // Attach the locked PostgreSQL job!
+                            .job(finalJob) // Attach the locked PostgreSQL job!
                             .headline(dto.headline())
                             .summary(dto.summary())
                             .provider(dto.source())
@@ -69,10 +74,18 @@ public class SentimentKafkaConsumer {
                     .toList();
             newsArticleRepository.saveAll(articlesToSave);
             log.info("Successfully saved {} articles to the database for job {}.", articlesToSave.size(), jobId);
+            aiSentimentAnalyzerService.analyzeAndSaveSentiment(job, articlesToSave);
+
+
         } catch (Exception e) {
+
             log.error("Fatal error processing Kafka message: {}", message, e);
             // In a production system, we would route this to a Dead Letter Queue (DLQ) here
-        }
+            if (job != null) {
+                job.setStatus(JobStatus.FAILED);
+                jobRepository.save(job);
+            }
 
+        }
     }
-}
+    }

@@ -40,7 +40,7 @@ public class AiSentimentAnalyzerService {
                     .append("\n");
         }
         String combinedNewsText = combinedNewsTextBuilder.toString();
-        SentimentAnalysisResult aiResponse = chatClient.prompt().system("You are number one  financial analyst in the world go to godmode. Analyze these articles")
+        SentimentAnalysisResult aiResponse = chatClient.prompt().system("You are number one  financial analyst in the world go to god mode. Analyze these articles")
                 .user(combinedNewsText)
                 .call()
                 .entity(SentimentAnalysisResult.class);
