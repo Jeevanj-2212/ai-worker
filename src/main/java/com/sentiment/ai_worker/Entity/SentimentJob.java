@@ -30,6 +30,8 @@ public class SentimentJob {
     private JobStatus status;
 
     private Integer retryCount;
+    @Column(columnDefinition = "TEXT")
+    private String result;
 
     private LocalDateTime requestedAt;
     private LocalDateTime processingStarted;

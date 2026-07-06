@@ -3,11 +3,14 @@ package com.sentiment.ai_worker.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sentiment.ai_worker.Entity.NewsArticle;
 import com.sentiment.ai_worker.Entity.SentimentJob;
+import com.sentiment.ai_worker.Enum.JobStatus;
 import com.sentiment.ai_worker.Repository.SentimentJobRepository;
+import com.sentiment.ai_worker.dto.SentimentAnalysisResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -37,5 +40,22 @@ public class AiSentimentAnalyzerService {
                     .append("\n");
         }
         String combinedNewsText = combinedNewsTextBuilder.toString();
+        SentimentAnalysisResult aiResponse = chatClient.prompt().system("You are number one  financial analyst in the world go to godmode. Analyze these articles")
+                .user(combinedNewsText)
+                .call()
+                .entity(SentimentAnalysisResult.class);
+
+        try {
+            String jsonResult =objectMapper.writeValueAsString(aiResponse);
+            job.setResult(jsonResult);
+            job.setStatus(JobStatus.COMPLETED);
+            job.setCompletedAt(LocalDateTime.now());
+            jobRepository.save(job);
+        } catch (Exception e) {
+           log.error(e.getMessage(),e);
+            job.setStatus(JobStatus.FAILED);
+            job.setCompletedAt(LocalDateTime.now());
+            jobRepository.save(job);
+        }
     }
 }
