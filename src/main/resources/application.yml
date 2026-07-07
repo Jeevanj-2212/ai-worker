@@ -1,6 +1,11 @@
 server:
   port: 8082
+
 spring:
+  config:
+
+    import: optional:file:.env[.properties]
+
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -8,11 +13,15 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   ai:
     google:
       genai:
-        api-key: AQ.Ab8RN6J4Uw8VhbkEMrAmBTK5y18BU728IWcagoQ8itZEybGYBg
-        project-id: sentiment-worker-project
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: gemini-2.5-flash
+
 
   datasource:
     url: jdbc:postgresql://localhost:5432/sentiment_db
@@ -21,22 +30,15 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
-    # This tells Hibernate to automatically create/update your tables based on your Java entities
     hibernate:
       ddl-auto: update
-
-    # This prints the SQL queries to your console ( helpful for debugging )
     show-sql: true
-
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-
-
-
 app:
   finnhub:
     base-url: https://finnhub.io/api/v1
-    api-key: d91vip1r01qqnh2j6c30d91vip1r01qqnh2j6c3g
+    api-key: ${FINNHUB_API_KEY}
