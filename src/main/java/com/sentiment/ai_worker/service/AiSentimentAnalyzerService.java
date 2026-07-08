@@ -5,6 +5,7 @@ import com.sentiment.ai_worker.Entity.NewsArticle;
 import com.sentiment.ai_worker.Entity.SentimentJob;
 import com.sentiment.ai_worker.Enum.JobStatus;
 import com.sentiment.ai_worker.Repository.SentimentJobRepository;
+import com.sentiment.ai_worker.Repository.SentimentResultRepository;
 import com.sentiment.ai_worker.dto.SentimentAnalysisResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -21,14 +22,16 @@ public class AiSentimentAnalyzerService {
     private final ChatClient chatClient;
     private final SentimentJobRepository jobRepository;
     private final ObjectMapper objectMapper;
+    private final SentimentResultRepository sentimentResultRepository;
 
     // 2. Manual constructor so we can .build() the ChatClient
     public AiSentimentAnalyzerService(ChatClient.Builder chatClientBuilder,
                                       SentimentJobRepository jobRepository,
-                                      ObjectMapper objectMapper) {
+                                      ObjectMapper objectMapper, SentimentResultRepository sentimentResultRepository) {
         this.chatClient = chatClientBuilder.build();
         this.jobRepository = jobRepository;
         this.objectMapper = objectMapper;
+        this.sentimentResultRepository = sentimentResultRepository;
     }
 
     public void analyzeAndSaveSentiment(SentimentJob job, List<NewsArticle> articles) {
