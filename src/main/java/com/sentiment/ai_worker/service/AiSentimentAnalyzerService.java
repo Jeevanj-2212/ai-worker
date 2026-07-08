@@ -3,6 +3,7 @@ package com.sentiment.ai_worker.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sentiment.ai_worker.Entity.NewsArticle;
 import com.sentiment.ai_worker.Entity.SentimentJob;
+import com.sentiment.ai_worker.Entity.SentimentResult;
 import com.sentiment.ai_worker.Enum.JobStatus;
 import com.sentiment.ai_worker.Repository.SentimentJobRepository;
 import com.sentiment.ai_worker.Repository.SentimentResultRepository;
@@ -10,12 +11,14 @@ import com.sentiment.ai_worker.dto.SentimentAnalysisResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Slf4j
+@Transactional
 public class AiSentimentAnalyzerService {
 
 
@@ -50,6 +53,13 @@ public class AiSentimentAnalyzerService {
 
         try {
             String jsonResult =objectMapper.writeValueAsString(aiResponse);
+            SentimentResult sentimentResult = SentimentResult.builder()
+                            .job(job)
+                                    .score(mapSentimentToScore(aiResponse.overallSentiment()))
+                                            .confidence(aiResponse.confidenceScore() != null ? aiResponse.confidenceScore().doubleValue() : 0.0)
+                                                    .reasoning(aiResponse.keyDrivers() != null ? aiResponse.keyDrivers().toString() : "No reasoning provided")
+                                                            .rawResponse(jsonResult).build();
+            sentimentResultRepository.save(sentimentResult);
             job.setResult(jsonResult);
             job.setStatus(JobStatus.COMPLETED);
             job.setCompletedAt(LocalDateTime.now());
@@ -60,5 +70,29 @@ public class AiSentimentAnalyzerService {
             job.setCompletedAt(LocalDateTime.now());
             jobRepository.save(job);
         }
+    }
+    private Double mapSentimentToScore(String sentimentText) {
+        if (sentimentText == null || sentimentText.isEmpty()) {
+            return 0.0;
+        }
+        switch (sentimentText.toLowerCase().trim()) {
+            case "positive" -> {
+                return  1.0;
+            }
+            case "slightly positive" -> {
+                return  0.5;
+            }
+            case "neutral" -> {
+                return 0.0;
+            }
+           case "slightly negative" -> {
+                return -0.5;
+           }
+           case "negative" -> {
+                return -1.0;
+           }
+
+        }
+        return 0.0;
     }
 }
