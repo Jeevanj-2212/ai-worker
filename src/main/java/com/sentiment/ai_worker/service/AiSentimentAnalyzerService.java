@@ -37,7 +37,7 @@ public class AiSentimentAnalyzerService {
         this.sentimentResultRepository = sentimentResultRepository;
     }
 
-    public void analyzeAndSaveSentiment(SentimentJob job, List<NewsArticle> articles) {
+    public String analyzeAndSaveSentiment(SentimentJob job, List<NewsArticle> articles) {
         StringBuilder combinedNewsTextBuilder = new StringBuilder();
         for (NewsArticle article : articles) {
             combinedNewsTextBuilder.append(article.getHeadline())
@@ -70,6 +70,7 @@ public class AiSentimentAnalyzerService {
             job.setCompletedAt(LocalDateTime.now());
             jobRepository.save(job);
         }
+        return combinedNewsText;
     }
     private Double mapSentimentToScore(String sentimentText) {
         if (sentimentText == null || sentimentText.isEmpty()) {

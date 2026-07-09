@@ -11,9 +11,11 @@ import com.sentiment.ai_worker.service.AiSentimentAnalyzerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,7 @@ public class SentimentKafkaConsumer {
 
     private final SentimentJobRepository jobRepository;
     private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redisTemplate;
 
     private final FinnhubClient finhubClient;
     private final NewsArticleRepository newsArticleRepository;
@@ -74,7 +77,14 @@ public class SentimentKafkaConsumer {
                     .toList();
             newsArticleRepository.saveAll(articlesToSave);
             log.info("Successfully saved {} articles to the database for job {}.", articlesToSave.size(), jobId);
-            aiSentimentAnalyzerService.analyzeAndSaveSentiment(job, articlesToSave);
+            String aiResult =  aiSentimentAnalyzerService.analyzeAndSaveSentiment(job, articlesToSave);
+            String redisKey = "Sentiment:" + ticker.toUpperCase();
+
+            log.info("Caching sentiment results in Redis for ticker: {} with a 10-minute TTL", ticker);
+            redisTemplate.opsForValue().set(
+                    redisKey,
+                    aiResult != null ? aiResult : "COMPLETED_WITHOUT_RAW_STRING",
+                    Duration.ofMinutes(10) );
 
 
         } catch (Exception e) {
