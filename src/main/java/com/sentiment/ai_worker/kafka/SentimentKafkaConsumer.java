@@ -47,6 +47,7 @@ public class SentimentKafkaConsumer {
             String ticker = jsonNode.get("ticker").asText();
 
             // 2. Fetch the job from the database
+
             job = jobRepository.findById(jobId)
                     .orElseThrow(() -> new IllegalArgumentException("Job not found in DB: " + jobId));
 
@@ -60,7 +61,7 @@ public class SentimentKafkaConsumer {
             log.info("Successfully locked Job {} for ticker {}. Status is now PROCESSING.", jobId, ticker);
 
             // Mapping FinhubNewsDto to NewsArticle
-
+            // use case of dto
 
             List<FinnhubNewsDto> newsDtos = finhubClient.fetchLatestNews(ticker);
 
