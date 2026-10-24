@@ -37,7 +37,7 @@ public class AiSentimentAnalyzerService {
         this.sentimentResultRepository = sentimentResultRepository;
     }
 
-    public String analyzeAndSaveSentiment(SentimentJob job, List<NewsArticle> articles) {
+    public SentimentAnalysisResult analyzeAndSaveSentiment(SentimentJob job, List<NewsArticle> articles) {
         StringBuilder combinedNewsTextBuilder = new StringBuilder();
         for (NewsArticle article : articles) {
             combinedNewsTextBuilder.append(article.getHeadline())
@@ -52,25 +52,27 @@ public class AiSentimentAnalyzerService {
                 .entity(SentimentAnalysisResult.class);
 
         try {
-            String jsonResult =objectMapper.writeValueAsString(aiResponse);
+            String jsonResult = objectMapper.writeValueAsString(aiResponse);
             SentimentResult sentimentResult = SentimentResult.builder()
-                            .job(job)
-                                    .score(mapSentimentToScore(aiResponse.overallSentiment()))
-                                            .confidence(aiResponse.confidenceScore() != null ? aiResponse.confidenceScore().doubleValue() : 0.0)
-                                                    .reasoning(aiResponse.keyDrivers() != null ? aiResponse.keyDrivers().toString() : "No reasoning provided")
-                                                            .rawResponse(jsonResult).build();
+                    .job(job)
+                    .score(mapSentimentToScore(aiResponse.overallSentiment()))
+                    .confidence(aiResponse.confidenceScore() != null ? aiResponse.confidenceScore().doubleValue() : 0.0)
+                    .reasoning(aiResponse.keyDrivers() != null ? aiResponse.keyDrivers().toString() : "No reasoning provided")
+                    .rawResponse(jsonResult)
+                    .build();
             sentimentResultRepository.save(sentimentResult);
             job.setResult(jsonResult);
             job.setStatus(JobStatus.COMPLETED);
             job.setCompletedAt(LocalDateTime.now());
             jobRepository.save(job);
+            return aiResponse; // the AI OUTPUT (typed DTO), not the news input
         } catch (Exception e) {
-           log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
             job.setStatus(JobStatus.FAILED);
             job.setCompletedAt(LocalDateTime.now());
             jobRepository.save(job);
+            return null; // failed -> caller must not cache anything
         }
-        return combinedNewsText;
     }
     private Double mapSentimentToScore(String sentimentText) {
         if (sentimentText == null || sentimentText.isEmpty()) {
