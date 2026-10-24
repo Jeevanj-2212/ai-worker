@@ -7,6 +7,7 @@ import com.sentiment.ai_worker.Repository.NewsArticleRepository;
 import com.sentiment.ai_worker.Repository.SentimentJobRepository;
 import com.sentiment.ai_worker.client.FinnhubClient;
 import com.sentiment.ai_worker.dto.FinnhubNewsDto;
+import com.sentiment.ai_worker.dto.SentimentAnalysisResult;
 import com.sentiment.ai_worker.service.AiSentimentAnalyzerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,15 +79,16 @@ public class SentimentKafkaConsumer {
                     .toList();
             newsArticleRepository.saveAll(articlesToSave);
             log.info("Successfully saved {} articles to the database for job {}.", articlesToSave.size(), jobId);
-            String aiResult =  aiSentimentAnalyzerService.analyzeAndSaveSentiment(job, articlesToSave);
+            SentimentAnalysisResult aiResult = aiSentimentAnalyzerService.analyzeAndSaveSentiment(job, articlesToSave);
             String redisKey = "Sentiment:" + ticker.toUpperCase();
 
-            log.info("Caching sentiment results in Redis for ticker: {} with a 10-minute TTL", ticker);
-            redisTemplate.opsForValue().set(
-                    redisKey,
-                    aiResult != null ? aiResult : "COMPLETED_WITHOUT_RAW_STRING",
-                    Duration.ofMinutes(10) );
-
+            if (aiResult != null) {
+                String json = objectMapper.writeValueAsString(aiResult);
+                log.info("Caching sentiment result in Redis for ticker {} with a 10-minute TTL", ticker);
+                redisTemplate.opsForValue().set(redisKey, json, Duration.ofMinutes(10));
+            } else {
+                log.warn("AI analysis failed for job {} - not caching anything for ticker {}", jobId, ticker);
+            }
 
         } catch (Exception e) {
 
