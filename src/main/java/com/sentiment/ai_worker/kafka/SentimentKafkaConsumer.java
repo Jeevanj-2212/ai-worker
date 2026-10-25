@@ -7,6 +7,7 @@ import com.sentiment.ai_worker.Repository.NewsArticleRepository;
 import com.sentiment.ai_worker.Repository.SentimentJobRepository;
 import com.sentiment.ai_worker.client.FinnhubClient;
 import com.sentiment.ai_worker.dto.FinnhubNewsDto;
+import com.sentiment.ai_worker.dto.NewsItem;
 import com.sentiment.ai_worker.dto.SentimentAnalysisResult;
 import com.sentiment.ai_worker.service.AiSentimentAnalyzerService;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +65,7 @@ public class SentimentKafkaConsumer {
             // Mapping FinhubNewsDto to NewsArticle
             // use case of dto
 
-            List<FinnhubNewsDto> newsDtos = finhubClient.fetchLatestNews(ticker);
+            List<NewsItem> newsDtos = finhubClient.fetchNews(ticker);
 
             SentimentJob finalJob = job;
             List<NewsArticle> articlesToSave = newsDtos.stream()
