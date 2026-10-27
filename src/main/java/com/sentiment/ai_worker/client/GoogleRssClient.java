@@ -1,4 +1,4 @@
-package com.sentiment.ai_worker;
+package com.sentiment.ai_worker.client;
 
 import com.sentiment.ai_worker.dto.NewsItem;
 import com.sentiment.ai_worker.news.NewsProvider;
